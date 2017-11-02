@@ -1,7 +1,7 @@
 # Modeling cooperation in the spatial PD with noise and biased migration
-*Noah Rivkin, Katya Donovan, Young Seok Kim*
+*Noah Rivkin, Katya Donovan, Tony Kim*
 
-Following Helbing’s and Yu’s *The outbreak of cooperation among success-driven individuals under noisy conditions*, we will investigate the self-organization of cooperative behavior. By modeling unrelated individuals with no behavioral traits and no social networks who are success-driven, we examine when and why cooperation occurs, even when the model makes cooperation difficult.
+Following Helbing’s and Yu’s *The outbreak of cooperation among success-driven individuals under noisy conditions*, we will investigate the self-organization of cooperative behavior. By modeling unrelated success-driven individuals with no behavioral traits and no social networks, we examine when and why cooperation occurs, even when the model makes cooperation difficult.
 
 We will simulate Prisoner’s Dilemma game on two dimensional spatial environment with 2 kinds of noises. First, we will add strategy mutation noise. With probability r, each individual will spontaneously choose to cooperate with probability q or to defect with probability 1-q until the next strategy change. Second, we will add random relocation noise. With probability r, an individual randomly chooses a free site without expected success. We will do all 4 combinations of experiments whether to add each of the noises.
 
