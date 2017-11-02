@@ -19,18 +19,21 @@ Over the next week, each of us will be begin implementing certain aspects of the
 
 ## Bibliography
 ### The Further Evolution of Cooperation
-Axelrod, R., & Dion, D. (1988). The further evolution of cooperation. Science, 242(4884), 1385-1390.
+*Axelrod, R., & Dion, D. (1988). The further evolution of cooperation. Science, 242(4884), 1385-1390.*
+
 Axelrod and Douglas argue that evolution can produce cooperation as a trait, even in situations where defection is a dominant strategy in a non-iterated version of the situation. They expand on the prisoner's dilemma tournament model used in Axelrod’s original tournament to incorporate evolutionary aspects. In the new model automata are constructed from a set of instructions, and then they interact with other automata as is the case in the older model. However, in addition to altering the population of each type of automata, the automata exchange instructions (chromosomes) or randomly alter a single instruction (mutation). Axelrod and Douglas conclude that cooperation can emerge from randomized evolution.
 
 
 ### The outbreak of cooperation among success-driven individuals under noisy conditions 
-Helbing, D., & Yu,W. (2008). The outbreak of cooperation among success-driven individuals under noisy conditions. The National Academy of Sciences of the USA.
+*Helbing, D., & Yu,W. (2008).*
+
+The outbreak of cooperation among success-driven individuals under noisy conditions. The National Academy of Sciences of the USA.
 Helbing and Yu investigate the emergence of cooperative behavior among competitive agents when non-cooperative behavior is a dominant strategy. They use the prisoner’s dilemma as a model for such interactions. They make the argument that the common solution to the dilemma, iteration, is not able to account for changing situations, or deal with a noisy environment. They construct an agent based model to create a more realistic model, implementing changing strategies, noise, and changing spatial dynamics. They find that introducing migration aids in the emergence of cooperation, even though individual agents no longer interact with the same set of other agents repeatedly.
 
 
 ### The Evolution of Strategies in the Iterated Prisoner’s Dilemma 
-Robert Axelrod
-Axelrod, Robert. “The Evolution of Strategies in the Iterated Prisoner’s Dilemma.” The Dynamics of Norms, edited by Cristina Bicchieri and Richard Jeffrey.
+*Axelrod, Robert. “The Evolution of Strategies in the Iterated Prisoner’s Dilemma.” The Dynamics of Norms, edited by Cristina Bicchieri and Richard Jeffrey.*
+
 Axelrod explores different models to study the evolution of strategies in games. He mainly examines the strategies in the Prisoner’s Dilemma, where exploiting the cooperation of others gives high rewards, unless both are defective. By investigating which strategies will produce the highest reward, Axelrod shows that simple strategies such as choosing the strategy that the prisoner’s partner had recently tried will be an effective way of earning the highest reward.
 
 
