@@ -1,5 +1,5 @@
 # Modeling cooperation in the spatial PD with noise and biased migration
-*Noah Rivkin, Katya Donovan, Tony Kim*
+*Noah Rivkin, Katya Donovan, Young Seok Kim*
 
 Following Helbing’s and Yu’s *The outbreak of cooperation among success-driven individuals under noisy conditions*, we will investigate the self-organization of cooperative behavior. By modeling unrelated individuals with no behavioral traits and no social networks who are success-driven, we examine when and why cooperation occurs, even when the model makes cooperation difficult.
 
