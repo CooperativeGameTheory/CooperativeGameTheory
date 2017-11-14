@@ -7,24 +7,33 @@ class Agent:
     color = 0 # white(0)/red(1)/blue(2)/green(3)/yellow(4) (but an agent will never get whilte color)
     color_lookup = {(1,1):1, (2,2):2, (1,2):3, (2,1):4}
 
-    def __init__(self, env, location, initial_state, r, q):
-        self.env = env
+    def __init__(self, initial_state, r=0.05, q=0.05, seed=100):
         self.state = initial_state
+        self.best_neighbor = initial_state
+        self.color = 1 if initial_state == 1 else 2
         self.r = r # 1-r is probability of imitation
         self.q = q # q is spontaneously cooperate, 1-q is spontaneously defect
+        self.seed = seed
 
     def update_best_performing_neighbor(self, code):
         self.best_neighbor = code
 
     def choose_next_state(self):
         prev_state = self.state
+        self._seed()
         if np.random.rand() < 1-self.r:
             self.state = self.best_neighbor
         else:
             # with probability q, cooperate, else defect
+            self._seed()
             self.state = 2 if np.random.rand() < self.q else 1
         # Update color
         self.color = color_lookup[(prev_state, self.state)]
+
+    def _seed(self):
+        np.random.seed(self.seed)
+        self.seed += 1
+
 
 
 class Environment:
@@ -52,10 +61,9 @@ class Environment:
     # Maximum score an agent can achieve in one round is 52 (when T=13)
     kernel2 = np.array([[     0,  100**1,       0],
                         [100**2,       1,  100**3],
-                        [     0,  100**4,       0], dtype=np.uint64)
-    rule = {10:self.R, 9:self.S, 6:self.T, 5:self.P, 0:0, 1:0, 2:0, 4:0, 8:0}
+                        [     0,  100**4,       0]], dtype=np.uint64)
 
-    def __init__(self, L=49, seed=0, R=10, S=0, T=13, P=1):
+    def __init__(self, L=49, seed=0, R=10, S=0, T=13, P=1, **config):
         self.size = size = (L, L)
         # Encode 'env' matrix to have
         # Empty location as 0, Defector as 1, Cooperator as 2
@@ -64,6 +72,7 @@ class Environment:
         # Register vectorized count score function and get state function
         self.vcountScore = np.vectorize(self._countScore)
         self.vgetState = np.vectorize(lambda x: x.state if x is not None else 0)
+        self.vgetColor = np.vectorize(lambda x: x.color if x is not None else 0)
         self.vfindBest = np.vectorize(self._findBest)
 
         # Make a matrix that holds Agent objects
@@ -73,7 +82,7 @@ class Environment:
         self.seed = seed
 
         # Register R,S,T,P
-        self.R, self.S, self.T, self.P = R, S, T, P
+        self.rule = {10:R, 9:S, 6:T, 5:P, 0:0, 1:0, 2:0, 4:0, 8:0}
 
     def place_agents(self):
         """
@@ -82,11 +91,14 @@ class Environment:
         and implementing your own place_agents(self) function
         """
         L, _ = self.size
-        all_indices = 
+        all_indices = np.array(list(np.ndindex(self.size)))
         self._seed()
         chosen_indices = np.random.choice(L*L, L*L//2, replace=False)
 
-
+        for idx in all_indices[chosen_indices,:]:
+            self._seed()
+            initial_state = np.random.choice([1,2])
+            self.agents[tuple(idx)] = Agent(initial_state)
 
 
     def playRound(self):
@@ -123,6 +135,8 @@ class Environment:
 
         self.update_env()
 
+        return scores
+
     def migrate(self):
         """
         Randomly migrate to different empty location
@@ -140,8 +154,8 @@ class Environment:
         r = np.random.rand(migrator_indices[0])
         choices = migrator_indices[r<p]
         migrator_indices = migrator_indices[choices, :]
-        self._seed()
         if len(migrator_indices):
+            self._seed()
             np.random.shuffle(migrator_indices)
 
         # numpy array of empty indices of shape (k, 2)
@@ -150,6 +164,7 @@ class Environment:
         # for each migrating agent, choose random destination
         for source in migrator_indices:
             source = tuple(source)
+            self._seed()
             i = np.random.randint(len(empty_indices))
             dest = tuple(empty_indices[i])
 
@@ -174,7 +189,7 @@ class Environment:
         return total
 
     def _seed(self):
-        np.seed(self.seed)
+        np.random.seed(self.seed)
         self.seed += 1
 
     def _findBest(self, num):
