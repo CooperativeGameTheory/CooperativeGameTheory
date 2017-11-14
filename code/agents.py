@@ -3,11 +3,11 @@ import numpy as np
 class Agent():
     """Agent"""
 
-    def __init__(self, loc, state, params=None):
+    def __init__(self, loc, state, array, params=None):
         self.loc = loc # location in environment - (row, column)
         if params == None:
-            self.intelligence = 1
-            pass
+            self.loc_options = 1
+            self.migrate_type = "random"
         else:
             # put prameters into instance
             pass
@@ -16,11 +16,8 @@ class Agent():
     def imitate(self, neighbors):
         pass
 
-    def migrate(self, locs, type='random'):
+    def migrate(self, locs):
         """ migration type is random, bias_res, bias_loc, or bias_both"""
-        pass
-
-    def play_pd(self, neighbors):
         pass
 
     def step(self, neighbors):
