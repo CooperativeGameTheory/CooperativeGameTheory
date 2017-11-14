@@ -1,12 +1,18 @@
 import numpy as np
 from scipy.signal import correlate2d
 import matplotlib.pyplot as plt
-from matplotlib import colors
+from matplotlib import colors, animation
 
 
 class Agent:
     score = 0
     color = 0 # white(0)/red(1)/blue(2)/green(3)/yellow(4) (but an agent will never get whilte color)
+    """
+    Red color indicates that the agent is/was defector
+    Blue color indicates that the agent is/was cooperator
+    Yellow color indicates that the agent just changed from cooperator to defector
+    Green color indicates that the agent just changed from defector to cooperator
+    """
     color_lookup = {(1,1):1, (2,2):2, (1,2):3, (2,1):4}
 
     def __init__(self, initial_state, r=0.05, q=0.05, seed=100):
@@ -35,7 +41,6 @@ class Agent:
     def _seed(self):
         np.random.seed(self.seed)
         self.seed += 1
-
 
 
 class Environment:
@@ -105,7 +110,8 @@ class Environment:
         for idx in all_indices[chosen_indices,:]:
             self._seed()
             initial_state = np.random.choice([1,2])
-            self.agents[tuple(idx)] = Agent(initial_state)
+            self._seed()
+            self.agents[tuple(idx)] = Agent(initial_state, seed=self.seed)
 
         self.update_env()
 
@@ -191,9 +197,28 @@ class Environment:
         self.env = self.vgetState(self.agents)
 
 
-    def visualize(self):
-        img = plt.imshow(self.vgetColor(self.agents), cmap=self.cmap, norm=self.norm)
-        plt.show()
+    def visualize(self, show=True):
+        self.img = plt.imshow(self.vgetColor(self.agents), cmap=self.cmap, norm=self.norm)
+        if show:
+            plt.show()
+
+    def animate(self, frames=200, interval=50):
+        """
+        frames : number of frames to draw
+        interval : time between frames in ms
+        200 frames with 50 interval should take 10 seconds
+        """
+        def step(i):
+            if i>0:
+                self.playRound()
+            a = self.vgetColor(self.agents)
+            self.img.set_array(a)
+            return (self.img,)
+
+        fig = plt.figure()
+        self.visualize(show=False)
+        anim = animation.FuncAnimation(fig, step, frames=frames, interval=interval)
+        return anim
 
     def debug(self, x, y):
         c = correlate2d(self.env, self.kernel, mode="same")
@@ -263,7 +288,4 @@ class Environment:
 #    def playgame(self, agentA, agentB):
 #        A, B = agentA.status, agentB.status
 #        rules[(A,B)]
-#
-#
-#
 
