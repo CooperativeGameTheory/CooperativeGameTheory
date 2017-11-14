@@ -1,5 +1,7 @@
 import numpy as np
 from scipy.signal import correlate2d
+import matplotlib.pyplot as plt
+from matplotlib import colors
 
 
 class Agent:
@@ -28,7 +30,7 @@ class Agent:
             self._seed()
             self.state = 2 if np.random.rand() < self.q else 1
         # Update color
-        self.color = color_lookup[(prev_state, self.state)]
+        self.color = self.color_lookup[(prev_state, self.state)]
 
     def _seed(self):
         np.random.seed(self.seed)
@@ -62,6 +64,11 @@ class Environment:
     kernel2 = np.array([[     0,  100**1,       0],
                         [100**2,       1,  100**3],
                         [     0,  100**4,       0]], dtype=np.uint64)
+
+    # Things needed for plotting
+    cmap = colors.ListedColormap(['white', 'red', 'blue', 'green', 'yellow'])
+    bounds=[0,1,2,3,4]
+    norm = colors.BoundaryNorm(bounds, cmap.N)
 
     def __init__(self, L=49, seed=0, R=10, S=0, T=13, P=1, **config):
         self.size = size = (L, L)
@@ -100,6 +107,8 @@ class Environment:
             initial_state = np.random.choice([1,2])
             self.agents[tuple(idx)] = Agent(initial_state)
 
+        self.update_env()
+
 
     def playRound(self):
         """
@@ -122,13 +131,14 @@ class Environment:
         # Find best for each cell
         surrounding = correlate2d(scores, self.kernel2, mode="same")
         best = self.vfindBest(surrounding)
+        tuple_lookup = {0:(0,0), 1:(0,1), 2:(-1,0), 3:(1,0), 4:(0,-1)}
 
         # Update agents
         for idx, agent in np.ndenumerate(self.agents):
             if agent is None:
                 continue
             x, y = idx
-            deltaX, deltaY = best[idx]
+            deltaX, deltaY = tuple_lookup[best[idx]]
             best_neighbor_state = self.env[x+deltaX, y+deltaY]
             agent.update_best_performing_neighbor(best_neighbor_state)
             agent.choose_next_state()
@@ -178,6 +188,10 @@ class Environment:
         self.env = self.vgetState(self.agents)
 
 
+    def visualize(self):
+        img = plt.imshow(self.vgetColor(self.agents), cmap=self.cmap, norm=self.norm)
+        plt.show()
+
 
     # private functions
     def _countScore(self, num):
@@ -197,13 +211,14 @@ class Environment:
         Given number calculated by correlate2d,
         find the location (relative to self)
         where it has the highest score
+        Encoded as middle = 0, top = 1, left = 2, right = 3, bottom = 5
         """
         middle, num = num % 100, num//100
         top, num = num % 100, num//100
         left, num = num % 100, num//100
         right, num = num % 100, num//100
         bottom = num % 100
-        d = {(0,0):middle, (0, 1):top, (-1,0):left, (1,0):right, (0,-1):bottom}
+        d = {0:middle, 1:top, 2:left, 3:right, 4:bottom}
         return max(d, key=d.get)
 
 
