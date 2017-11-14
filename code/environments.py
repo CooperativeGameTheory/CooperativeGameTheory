@@ -131,7 +131,10 @@ class Environment:
         # Find best for each cell
         surrounding = correlate2d(scores, self.kernel2, mode="same")
         best = self.vfindBest(surrounding)
-        tuple_lookup = {0:(0,0), 1:(0,1), 2:(-1,0), 3:(1,0), 4:(0,-1)}
+
+        # Encoded as middle = 0, top = 1, left = 2, right = 3, bottom = 4
+        # Note that x is indexed first and y is indexed last (x is vertical, y is horizontal)
+        tuple_lookup = {0:(0,0), 1:(-1,0), 2:(0,-1), 3:(0,1), 4:(1,0)}
 
         # Update agents
         for idx, agent in np.ndenumerate(self.agents):
@@ -192,6 +195,24 @@ class Environment:
         img = plt.imshow(self.vgetColor(self.agents), cmap=self.cmap, norm=self.norm)
         plt.show()
 
+    def debug(self, x, y):
+        c = correlate2d(self.env, self.kernel, mode="same")
+        scores = self.vcountScore(c) # n x n nparray
+        surrounding = correlate2d(scores, self.kernel2, mode="same")
+        best = self.vfindBest(surrounding)
+        chopper = slice(max(0, x-1), x+2), slice(max(0, y-1), y+2)
+        print("[Agents]")
+        print(self.agents[chopper])
+        print("[env]")
+        print(self.env[chopper])
+        print("[Scores]")
+        print(scores[chopper])
+        print("[Surroundings]")
+        print(int(surrounding[x,y]))
+        print("[Best]")
+        print(best[chopper])
+        return self.agents, self.env, scores, surrounding, best
+
 
     # private functions
     def _countScore(self, num):
@@ -211,7 +232,7 @@ class Environment:
         Given number calculated by correlate2d,
         find the location (relative to self)
         where it has the highest score
-        Encoded as middle = 0, top = 1, left = 2, right = 3, bottom = 5
+        Encoded as middle = 0, top = 1, left = 2, right = 3, bottom = 4
         """
         middle, num = num % 100, num//100
         top, num = num % 100, num//100
