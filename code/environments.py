@@ -96,6 +96,9 @@ class Environment:
         # Register R,S,T,P
         self.rule = {10:R, 9:S, 6:T, 5:P, 0:0, 1:0, 2:0, 4:0, 8:0}
 
+        # Register configurations
+        self.config = config
+
     def place_agents(self):
         """
         Places agents randomly and leave 50% empty sites
@@ -152,6 +155,10 @@ class Environment:
             agent.update_best_performing_neighbor(best_neighbor_state)
             agent.choose_next_state()
 
+
+        if self.config.get("migrate"):
+            self.migrate()
+
         self.update_env()
 
         return scores
@@ -159,6 +166,8 @@ class Environment:
     def migrate(self):
         """
         Randomly migrate to different empty location
+        You can override this function by inheriting Environment class
+        and implementing your own migrate(self) function
         """
         n, _ = self.size
         env = self.env
@@ -170,9 +179,8 @@ class Environment:
         # Choose migrating agents
         migrator_indices = np.argwhere(self.env > 0)
         self._seed()
-        r = np.random.rand(migrator_indices[0])
-        choices = migrator_indices[r<p]
-        migrator_indices = migrator_indices[choices, :]
+        r = np.random.rand(migrator_indices.shape[0])
+        migrator_indices = migrator_indices[r<p]
         if len(migrator_indices):
             self._seed()
             np.random.shuffle(migrator_indices)
@@ -190,7 +198,7 @@ class Environment:
             # move
             agents[dest] = agents[source]
             agents[source] = None
-            empty_indices[i] = source
+            empty_indices[i] = list(source)
 
     def update_env(self):
         """ Based on the locations of agents, update the env """
