@@ -38,6 +38,17 @@ class Environment:
     norm = colors.BoundaryNorm(bounds, cmap.N)
 
     def __init__(self, L=49, seed=0, R=10, S=0, T=13, P=1, **config):
+        """
+        L : Length of one side
+        seed : Random seed for controlling randomness
+        T : Temptation payoff
+        R : Reward for cooperating
+        P : Punishment payoff for both defect
+        S : Sucker's payoff
+        (T > R > P > S) condition indicates prisoner's dillema condition
+        (T > R > P > S) condition indicates snowdrift game
+        config : possible configs - 'migrate'
+        """
         self.size = size = (L, L)
         # Encode 'env' matrix to have
         # Empty location as 0, Defector as 1, Cooperator as 2
@@ -238,24 +249,32 @@ class Environment:
         return max(d, key=d.get)
 
 
-#class PrisonerDilemma:
-#    def __init__(self, T, R, P, S):
-#        """
-#        T : Temptation payoff
-#        R : Reward for cooperating
-#        P : Punishment payoff for both defect
-#        S : Sucker's payoff
-#        (T > R > P > S) condition indicates prisoner's dillema condition
-#        (T > R > P > S) condition indicates snowdrift game
-#        """
-#        rules = {}
-#        rules[('C', 'C')] = R, R
-#        rules[('D', 'C')] = T, S
-#        rules[('C', 'D')] = S, T
-#        rules[('D', 'D')] = P, P
-#        self.rules = rules
-#
-#    def playgame(self, agentA, agentB):
-#        A, B = agentA.status, agentB.status
-#        rules[(A,B)]
+class SocialNetworkEnv(Environment):
+    # Overriding place_agents function
+    def place_agents(self):
+        """
+        Places agents randomly and leave 50% empty sites
+        You can override this function by inheriting Environment class
+        and implementing your own place_agents(self) function
+        """
+        L, _ = self.size
+        all_indices = np.array(list(np.ndindex(self.size)))
+        self._seed()
+        number_of_agents = L*L//2
+        chosen_indices = np.random.choice(L*L, number_of_agents, replace=False)
+
+        self.agent_list = []
+        # Initialize social trust network
+        self.agent_network = np.random.random((number_of_agents, number_of_agents))
+        for idx in all_indices[chosen_indices,:]:
+            self._seed()
+            initial_state = np.random.choice([1,2])
+            self._seed()
+            agent = Agent(initial_state, seed=self.seed)
+            self.agents[tuple(idx)] = agent
+            self.agent_list.append(agent)
+        self.update_env()
+
+
+
 

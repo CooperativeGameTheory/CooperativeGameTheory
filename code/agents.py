@@ -39,6 +39,19 @@ class Agent:
         self.seed += 1
 
 
+class SocialAgent(Agent):
+    def update_average_neighbor_weights(self, avg_weights):
+        self.average_neighbor_weights = avg_weights
+
+    def choose_next_state(self):
+        prev_state = self.state
+        # With probabilty of trust, cooperate else defect
+        self._seed()
+        self.state = 2 if np.random.rand() < self.average_neighbor_weights else 1
+        # Update color
+        self.color = self.color_lookup[(prev_state, self.state)]
+
+
 class AgentBiulder():
     """constructor for agents, allows differentiation more easily"""
     def __init__(self, loc, state, constructor=Agent, parameters=None):
