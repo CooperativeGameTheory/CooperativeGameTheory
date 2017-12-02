@@ -22,6 +22,7 @@ class Agent:
         self.r = r # 1-r is probability of imitation
         self.q = q # q is spontaneously cooperate, 1-q is spontaneously defect
         self.seed = seed
+        self.network = np.random.rand(n,n)
 
     def update_best_performing_neighbor(self, code):
         self.best_neighbor = code
