@@ -201,6 +201,7 @@ class Environment:
         empty_indices = np.argwhere(self.env == 0)
 
         # for each migrating agent, choose random destination
+        # print(trust_at_loc[sorted_trust_at_loc[0]], trust_at_loc[sorted_trust_at_loc[1]],trust_at_loc[sorted_trust_at_loc[-1]])
         for source in migrator_indices:
             source = tuple(source)
             self._seed()
@@ -277,7 +278,7 @@ class Environment:
                     total += self.getTrustPair(ident1, ident2)
                     num_adj += 1
         if num_adj == 0:
-            return 0
+            return .5
         return total/num_adj
 
 
