@@ -3,7 +3,7 @@ from scipy.signal import correlate2d
 import matplotlib.pyplot as plt
 from matplotlib import colors, animation
 
-from agents import Agent
+from agents import Agent, SocialAgent
 
 class Environment:
     """ Environment
@@ -32,9 +32,14 @@ class Environment:
                         [100**2,       1,  100**3],
                         [     0,  100**4,       0]], dtype=np.uint64)
 
+    # Count kernel is used to count defectors or cooperators
+    count_kernel = np.array([[0, 1, 0],
+                             [1, 0 ,1],
+                             [0, 1 ,0]], dtype=np.uint64)
+
     # Things needed for plotting
     cmap = colors.ListedColormap(['white', 'red', 'blue', 'green', 'yellow'])
-    bounds=[0,1,2,3,4]
+    bounds=[-0.5, 0.5, 1.5, 2.5, 3.5, 4.5]
     norm = colors.BoundaryNorm(bounds, cmap.N)
 
     def __init__(self, L=49, seed=0, R=10, S=0, T=13, P=1, **config):
@@ -217,6 +222,8 @@ class Environment:
         print(int(surrounding[x,y]))
         print("[Best]")
         print(best[chopper])
+        print("[Colors]")
+        print(self.vgetColor(self.agents)[chopper])
         return self.agents, self.env, scores, surrounding, best
 
 
@@ -266,14 +273,159 @@ class SocialNetworkEnv(Environment):
         self.agent_list = []
         # Initialize social trust network
         self.agent_network = np.random.random((number_of_agents, number_of_agents))
-        for idx in all_indices[chosen_indices,:]:
+        for idnumber, idx in enumerate(all_indices[chosen_indices,:]):
             self._seed()
             initial_state = np.random.choice([1,2])
             self._seed()
-            agent = Agent(initial_state, seed=self.seed)
+            agent = SocialAgent(initial_state, seed=self.seed)
+            agent.idnumber = idnumber
             self.agents[tuple(idx)] = agent
             self.agent_list.append(agent)
         self.update_env()
+
+    def migrate(self, M=5):
+        """
+        Randomly migrate to different empty location
+        You can override this function by inheriting Environment class
+        and implementing your own migrate(self) function
+        """
+        n, _ = self.size
+        env = self.env
+        agents = self.agents
+
+        # Probability of relocation
+        p = 0.05
+
+        # Choose migrating agents
+        migrator_indices = np.argwhere(self.env > 0)
+        self._seed()
+        r = np.random.rand(migrator_indices.shape[0])
+        migrator_indices = migrator_indices[r<p]
+        if len(migrator_indices):
+            self._seed()
+            np.random.shuffle(migrator_indices)
+
+        # numpy array of empty indices of shape (k, 2)
+        empty_indices = np.argwhere(self.env == 0)
+        empty_indices_set = set(map(tuple, empty_indices))
+
+        # Count Defector-Cooperator ratio
+        #num_cooperator = correlate2d(self.env == 2, self.count_kernel, mode="same")
+        #num_defector = correlate2d(self.env == 1, self.count_kernel, mode="same")
+        #denominator = num_cooperator + num_defector
+        #ratio = np.divide(num_cooperator, denominator, out=np.zeros_like(num_cooperator), where=(denominator!=0))
+
+        # for each migrating agent, choose best destination
+        for source in migrator_indices:
+            source = tuple(source)
+
+            # generate source agent's range
+            x, y = source
+            range_indices_set = set((x+i, y+j) for i in range(-M, M+1) for j in range(-M, M+1) if not (i==0 and j==0))
+
+            # Get empty spots within the range (intersection)
+            empty_in_range = range_indices_set & empty_indices_set
+
+            # If no empty spots, don't migrate
+            if len(empty_in_range) == 0:
+                continue
+
+            source_agent = agents[source]
+            s_id = source_agent.idnumber
+
+            # For each empty spots, calculate average trust value
+            # And calculate the best empty spot that has the highest expected average trust value
+            current_max = -1
+            for d_x, d_y in empty_in_range:
+                trust_value_sum = 0
+                count = 0
+                for a in [d_x-1, d_x+1]:
+                    for b in [d_y-1, d_y+1]:
+                        if not (0 <= a < n and 0 <= b < n):
+                            continue
+                        if agents[a, b] is not None:
+                            d_id = agents[a, b].idnumber
+                            trust_value_sum += self.agent_network[s_id, d_id]
+                            count += 1
+                if count == 0:
+                    if current_max == -1:
+                        dest = (d_x, d_y)
+                    continue
+                average_value = trust_value_sum / count
+                if average_value > current_max:
+                    current_max = average_value
+                    dest = (d_x, d_y)
+
+            # move
+            agents[dest] = agents[source]
+            agents[source] = None
+            empty_indices_set.remove(dest)
+            empty_indices_set.add(source)
+
+
+    def playRound(self):
+        """
+        Simulates Prisoner's Dillema, calculates score for each cell, and updates agents
+        """
+        n, _ = self.size
+
+        # Default correlate2d handles boundary with 'fill' option with 'fillvalue' zero.
+        c = correlate2d(self.env, self.kernel, mode="same")
+
+        # Each digit (in hex) of the number (in each cell) can be either:
+        # 0 : both cell is empty
+        # 1,2,4,8 : one of the cell is empty
+        # 5 : both cell defected
+        # 6 : middle cell Defected, the other cell Cooperated
+        # 9 : middle cell Cooperated, the other cell Defected
+        # A : both cell cooperated
+
+        # Gives scores for each cell
+        scores = self.vcountScore(c) # n x n nparray
+
+        # Find best for each cell
+        surrounding = correlate2d(scores, self.kernel2, mode="same")
+        best = self.vfindBest(surrounding)
+
+        # Encoded as middle = 0, top = 1, left = 2, right = 3, bottom = 4
+        # Note that x is indexed first and y is indexed last (x is vertical, y is horizontal)
+        tuple_lookup = {0:(0,0), 1:(-1,0), 2:(0,-1), 3:(0,1), 4:(1,0)}
+
+        # Update agents
+        for idx, agent in np.ndenumerate(self.agents):
+            if agent is None:
+                continue
+            x, y = idx
+            deltaX, deltaY = tuple_lookup[best[idx]]
+            best_neighbor_state = self.env[x+deltaX, y+deltaY]
+
+            # Calculate the average trust values
+            s_id = agent.idnumber
+            trust_value_sum = 0
+            count = 0
+            for a in [x-1, x+1]:
+                for b in [y-1, y+1]:
+                    if not (0 <= a < n and 0 <= b < n):
+                        continue
+                    if self.agents[a, b] is not None:
+                        d_id = self.agents[a, b].idnumber
+                        trust_value_sum += self.agent_network[s_id, d_id]
+                        count += 1
+            if count == 0:
+                average_value = 0.5
+            else:
+                average_value = trust_value_sum / count
+
+            agent.update_average_neighbor_weights(average_value)
+            agent.choose_next_state()
+
+
+        if self.config.get("migrate"):
+            self.migrate()
+
+        self.update_env()
+
+        return scores
 
 
 
