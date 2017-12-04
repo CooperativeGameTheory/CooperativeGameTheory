@@ -282,6 +282,7 @@ class SocialNetworkEnv(Environment):
             self.agents[tuple(idx)] = agent
             self.agent_list.append(agent)
         self.update_env()
+        assert(len(np.argwhere(self.env > 0)) == L*L//2)
 
     def migrate(self, M=5):
         """
@@ -362,6 +363,7 @@ class SocialNetworkEnv(Environment):
             empty_indices_set.remove(dest)
             empty_indices_set.add(source)
 
+        assert(len(np.argwhere(self.env > 0)) == n*n//2)
 
     def playRound(self):
         """

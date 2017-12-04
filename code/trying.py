@@ -76,7 +76,7 @@ class Environment:
     bounds=[-.5,.5,1.5,2.5,3.5,4.5]
     norm = colors.BoundaryNorm(bounds, cmap.N)
 
-    def __init__(self, L=49, seed=0, R=10, S=0, T=13, P=1, N=3, **config):
+    def __init__(self, L=49, seed=0, R=10, S=0, T=13, P=1, M=3, **config):
         self.size = size = (L, L)
         # Encode 'env' matrix to have
         # Empty location as 0, Defector as 1, Cooperator as 2
@@ -101,7 +101,7 @@ class Environment:
         self.config = config
 
         # Migration parameter
-        self.neighborhood = N
+        self.neighborhood = M
 
     def place_agents(self):
         """
@@ -127,6 +127,11 @@ class Environment:
         """
         Simulates Prisoner's Dillema, calculates score for each cell, and updates agents
         """
+        if self.config.get("migrate"):
+            self.migrate()
+
+        self.update_env()
+
         # Default correlate2d handles boundary with 'fill' option with 'fillvalue' zero.
         c = correlate2d(self.env, self.kernel, mode="same")
 
@@ -160,11 +165,6 @@ class Environment:
             agent.choose_next_state()
 
 
-        if self.config.get("migrate"):
-            self.migrate()
-
-        self.update_env()
-
         return self.scores
 
     def migrate(self):
@@ -176,6 +176,7 @@ class Environment:
         n, _ = self.size
         env = self.env
         agents = self.agents
+        M = self.neighborhood
 
         # Probability of relocation
         p = 0.05
@@ -191,45 +192,50 @@ class Environment:
 
         # numpy array of empty indices of shape (k, 2)
         empty_indices = np.argwhere(self.env == 0)
+        empty_indices_set = set(map(tuple, empty_indices))
+
         # for each migrating agent, find empty cells by N
         for source in migrator_indices:
-            empty_cells_list = []
+            # Get range indices
             source = tuple(source)
-            for cell in empty_indices:
-                cell = tuple(cell)
-                if cell[0] - self.neighborhood <= source[0] <= cell[0] + self.neighborhood:
-                    if cell[1] - self.neighborhood <= source[1] <= cell[1] + self.neighborhood:
-                        empty_cells_list.append(cell)
+            x, y = source
+            range_indices_set = set((x+i, y+j) for i in range(-M, M+1) for j in range(-M, M+1) if not (i==0 and j==0))
 
-            for cell in empty_cells_list:
-                self.env[cell] = self.env[source]
+            # Get empty spots within the range (intersection)
+            empty_in_range = range_indices_set & empty_indices_set
+            if len(empty_in_range) == 0:
+                continue
 
+            # Virtually put the source agent to the empty spots within the range
+            for empty_spot in empty_in_range:
+                self.env[empty_spot] = self.env[source]
+
+            # Calculate the expected score for the empty spots
             c = correlate2d(self.env, self.kernel, mode="same")
-            self.scores = self.vcountScore(c) # n x n nparray
+            scores = self.vcountScore(c) # n x n nparray
 
-            scores_empty = dict()
-            for cell in empty_cells_list:
-                scores_empty[cell[0],cell[1]] = self.scores[cell[0]][cell[1]]
+            expected_scores = dict() # {empty spot index(i,j) : expected score} dictionary
+            for cell in empty_in_range:
+                expected_scores[cell] = scores[cell]
+                # Remove the virtual agent and change back to empty cell
                 self.env[cell] = 0
 
-            max_score= max(scores_empty.values())
-            max_cell = [k for k,v in scores_empty.items() if v == max_score]
-            max_cell = max_cell[random.randrange(len(max_cell))]
-            #print(len(np.argwhere(self.env > 0)))
-            #move
-            agents[max_cell] = agents[source]
+            # Destination is chosen such that it has the highest expected value
+            max_score = max(expected_scores.values())
+            dest_candidates = [k for k, v in expected_scores.items() if v == max_score]
+            dest = min(expected_scores, key=lambda coord: (coord[0]-x)**2 + (coord[1]-y)**2)
+
+            # move
+            agents[dest] = agents[source]
             agents[source] = None
-            for i in empty_indices:
-                if i[0] == max_cell[0]:
-                    if i[1] == max_cell[1]:
-                        index = i
-                        break
 
-            empty_indices[index] = list(source)
+            self.update_env() # Fixes self.env based on self.agents
 
-            self._seed()
+            empty_indices_set.remove(dest)
+            empty_indices_set.add(source)
 
-        return migrator_indices
+        # Make sure we still have same number of agents
+        assert(len(np.argwhere(self.env > 0)) == n*n//2)
 
     def update_env(self):
         """ Based on the locations of agents, update the env """
