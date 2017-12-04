@@ -39,7 +39,7 @@ class Environment:
 
     # Things needed for plotting
     cmap = colors.ListedColormap(['white', 'red', 'blue', 'green', 'yellow'])
-    bounds=[0,1,2,3,4]
+    bounds=[-0.5, 0.5, 1.5, 2.5, 3.5, 4.5]
     norm = colors.BoundaryNorm(bounds, cmap.N)
 
     def __init__(self, L=49, seed=0, R=10, S=0, T=13, P=1, **config):
