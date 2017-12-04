@@ -32,6 +32,11 @@ class Environment:
                         [100**2,       1,  100**3],
                         [     0,  100**4,       0]], dtype=np.uint64)
 
+    # Count kernel is used to count defectors or cooperators
+    count_kernel = np.array([[0, 1, 0],
+                             [1, 0 ,1],
+                             [0, 1 ,0]], dtype=np.uint64)
+
     # Things needed for plotting
     cmap = colors.ListedColormap(['white', 'red', 'blue', 'green', 'yellow'])
     bounds=[0,1,2,3,4]
@@ -266,14 +271,78 @@ class SocialNetworkEnv(Environment):
         self.agent_list = []
         # Initialize social trust network
         self.agent_network = np.random.random((number_of_agents, number_of_agents))
-        for idx in all_indices[chosen_indices,:]:
+        for idnumber, idx in enumerate(all_indices[chosen_indices,:]):
             self._seed()
             initial_state = np.random.choice([1,2])
             self._seed()
-            agent = Agent(initial_state, seed=self.seed)
+            agent = SocialAgent(initial_state, seed=self.seed)
+            agent.idnumber = idnumber
             self.agents[tuple(idx)] = agent
             self.agent_list.append(agent)
         self.update_env()
+
+    def migrate(self):
+        """
+        Randomly migrate to different empty location
+        You can override this function by inheriting Environment class
+        and implementing your own migrate(self) function
+        """
+        n, _ = self.size
+        env = self.env
+        agents = self.agents
+
+        # Probability of relocation
+        p = 0.05
+
+        # Choose migrating agents
+        migrator_indices = np.argwhere(self.env > 0)
+        self._seed()
+        r = np.random.rand(migrator_indices.shape[0])
+        migrator_indices = migrator_indices[r<p]
+        if len(migrator_indices):
+            self._seed()
+            np.random.shuffle(migrator_indices)
+
+        # numpy array of empty indices of shape (k, 2)
+        empty_indices = np.argwhere(self.env == 0)
+        empty_indices_set = set(map(tuple, empty_indices))
+
+        # Count Defector-Cooperator ratio
+        #num_cooperator = correlate2d(self.env == 2, self.count_kernel, mode="same")
+        #num_defector = correlate2d(self.env == 1, self.count_kernel, mode="same")
+        #denominator = num_cooperator + num_defector
+        #ratio = np.divide(num_cooperator, denominator, out=np.zeros_like(num_cooperator), where=(denominator!=0))
+
+        # for each migrating agent, choose best destination
+        for source in migrator_indices:
+            source = tuple(source)
+
+            # generate source agent's range
+            x, y = source
+            range_indices_set = set((x+i, y+j) for i in range(-M, M+1) for j in range(-M, M+1) if not (i==0 and j==0))
+
+            # Get empty spots within the range (intersection)
+            empty_in_range = range_indices_set & empty_indices_set
+
+            # If no empty spots, don't migrate
+            if len(empty_in_range) == 0:
+                continue
+
+            for d_x, d_y in empty_in_range:
+                for a in [d_x-1, d_x+1]:
+                    for b in [d_y-1, d_y+1]:
+                        
+
+            # get max ratio index
+            dest = max(empty_in_range, key=ratio.__getitem__)
+
+            # move
+            agents[dest] = agents[source]
+            agents[source] = None
+            empty_indices_set.remove(dest)
+            empty_indices_set.add(source)
+
+
 
 
 
