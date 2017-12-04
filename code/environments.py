@@ -3,7 +3,7 @@ from scipy.signal import correlate2d
 import matplotlib.pyplot as plt
 from matplotlib import colors, animation
 
-from agents import Agent
+from agents import Agent, SocialAgent
 
 class Environment:
     """ Environment
@@ -222,6 +222,8 @@ class Environment:
         print(int(surrounding[x,y]))
         print("[Best]")
         print(best[chopper])
+        print("[Colors]")
+        print(self.vgetColor(self.agents)[chopper])
         return self.agents, self.env, scores, surrounding, best
 
 
@@ -281,7 +283,7 @@ class SocialNetworkEnv(Environment):
             self.agent_list.append(agent)
         self.update_env()
 
-    def migrate(self):
+    def migrate(self, M=5):
         """
         Randomly migrate to different empty location
         You can override this function by inheriting Environment class
@@ -328,13 +330,31 @@ class SocialNetworkEnv(Environment):
             if len(empty_in_range) == 0:
                 continue
 
+            source_agent = agents[source]
+            s_id = source_agent.idnumber
+
+            # For each empty spots, calculate average trust value
+            # And calculate the best empty spot that has the highest expected average trust value
+            current_max = -1
             for d_x, d_y in empty_in_range:
+                trust_value_sum = 0
+                count = 0
                 for a in [d_x-1, d_x+1]:
                     for b in [d_y-1, d_y+1]:
-                        
-
-            # get max ratio index
-            dest = max(empty_in_range, key=ratio.__getitem__)
+                        if not (0 <= a < n and 0 <= b < n):
+                            continue
+                        if agents[a, b] is not None:
+                            d_id = agents[a, b].idnumber
+                            trust_value_sum += self.agent_network[s_id, d_id]
+                            count += 1
+                if count == 0:
+                    if current_max == -1:
+                        dest = (d_x, d_y)
+                    continue
+                average_value = trust_value_sum / count
+                if average_value > current_max:
+                    current_max = average_value
+                    dest = (d_x, d_y)
 
             # move
             agents[dest] = agents[source]
@@ -343,6 +363,69 @@ class SocialNetworkEnv(Environment):
             empty_indices_set.add(source)
 
 
+    def playRound(self):
+        """
+        Simulates Prisoner's Dillema, calculates score for each cell, and updates agents
+        """
+        n, _ = self.size
+
+        # Default correlate2d handles boundary with 'fill' option with 'fillvalue' zero.
+        c = correlate2d(self.env, self.kernel, mode="same")
+
+        # Each digit (in hex) of the number (in each cell) can be either:
+        # 0 : both cell is empty
+        # 1,2,4,8 : one of the cell is empty
+        # 5 : both cell defected
+        # 6 : middle cell Defected, the other cell Cooperated
+        # 9 : middle cell Cooperated, the other cell Defected
+        # A : both cell cooperated
+
+        # Gives scores for each cell
+        scores = self.vcountScore(c) # n x n nparray
+
+        # Find best for each cell
+        surrounding = correlate2d(scores, self.kernel2, mode="same")
+        best = self.vfindBest(surrounding)
+
+        # Encoded as middle = 0, top = 1, left = 2, right = 3, bottom = 4
+        # Note that x is indexed first and y is indexed last (x is vertical, y is horizontal)
+        tuple_lookup = {0:(0,0), 1:(-1,0), 2:(0,-1), 3:(0,1), 4:(1,0)}
+
+        # Update agents
+        for idx, agent in np.ndenumerate(self.agents):
+            if agent is None:
+                continue
+            x, y = idx
+            deltaX, deltaY = tuple_lookup[best[idx]]
+            best_neighbor_state = self.env[x+deltaX, y+deltaY]
+
+            # Calculate the average trust values
+            s_id = agent.idnumber
+            trust_value_sum = 0
+            count = 0
+            for a in [x-1, x+1]:
+                for b in [y-1, y+1]:
+                    if not (0 <= a < n and 0 <= b < n):
+                        continue
+                    if self.agents[a, b] is not None:
+                        d_id = self.agents[a, b].idnumber
+                        trust_value_sum += self.agent_network[s_id, d_id]
+                        count += 1
+            if count == 0:
+                average_value = 0.5
+            else:
+                average_value = trust_value_sum / count
+
+            agent.update_average_neighbor_weights(average_value)
+            agent.choose_next_state()
+
+
+        if self.config.get("migrate"):
+            self.migrate()
+
+        self.update_env()
+
+        return scores
 
 
 
