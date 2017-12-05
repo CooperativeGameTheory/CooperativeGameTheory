@@ -1,4 +1,4 @@
-### Observing Cooperation in Social Networks
+# Observing Cooperation in Social Networks
 ## Katya Donovan, Tony Kim, Noah Rivkin
 ## Abstract
 
