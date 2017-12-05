@@ -191,8 +191,10 @@ class Environment:
 
         # numpy array of empty indices of shape (k, 2)
         empty_indices = np.argwhere(self.env == 0)
+
         # for each migrating agent, find empty cells by N
         for source in migrator_indices:
+
             empty_cells_list = []
             source = tuple(source)
             for cell in empty_indices:
@@ -208,23 +210,30 @@ class Environment:
             self.scores = self.vcountScore(c) # n x n nparray
 
             scores_empty = dict()
+
             for cell in empty_cells_list:
                 scores_empty[cell[0],cell[1]] = self.scores[cell[0]][cell[1]]
                 self.env[cell] = 0
 
             max_score= max(scores_empty.values())
             max_cell = [k for k,v in scores_empty.items() if v == max_score]
+
             max_cell = max_cell[random.randrange(len(max_cell))]
-            #print(len(np.argwhere(self.env > 0)))
+            #print(max_cell)
+            #print(source)
+            #print(len(np.argwhere(self.env == 0)))
             #move
             agents[max_cell] = agents[source]
             agents[source] = None
-            for i in empty_indices:
-                if i[0] == max_cell[0]:
-                    if i[1] == max_cell[1]:
+            #print(empty_indices)
+            for i,cell in enumerate(empty_indices):
+                if cell[0] == max_cell[0]:
+                    if cell[1] == max_cell[1]:
                         index = i
                         break
-
+            print(len(np.argwhere(self.env == 0)))
+            #print(index)
+            #print(empty_indices[index])
             empty_indices[index] = list(source)
 
             self._seed()
