@@ -35,7 +35,8 @@ class Agent:
         else:
             # with probability q, cooperate, else defect
             self._seed()
-            self.state = 2 if np.random.rand() < self.q else 1
+            #self.state = 2 if np.random.rand() < self.q else 1
+            self.state = 2 if np.random.rand() < 0.5 else 1
         # Update color
         self.color = self.color_lookup[(prev_state, self.state)]
 
@@ -183,8 +184,8 @@ class Environment:
         M = self.neighborhood
 
         # Probability of relocation
-        #p = 0.05
-        p = 1
+        p = 0.05
+        #p = 1
 
         # Choose migrating agents
         migrator_indices = np.argwhere(self.env > 0)
@@ -223,7 +224,7 @@ class Environment:
                     for b in [d_y-1, d_y+1]:
                         if not (0 <= a < n and 0 <= b < n):
                             continue
-                        opponent_strategy = self.env[empty_spot]
+                        opponent_strategy = self.env[a, b]
                         if opponent_strategy :
                             score += score_lookup[(my_strategy, opponent_strategy)]
                 expected_scores[empty_spot] = score
