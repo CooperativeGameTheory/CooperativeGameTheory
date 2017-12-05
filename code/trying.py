@@ -183,7 +183,8 @@ class Environment:
         M = self.neighborhood
 
         # Probability of relocation
-        p = 0.05
+        #p = 0.05
+        p = 1
 
         # Choose migrating agents
         migrator_indices = np.argwhere(self.env > 0)
@@ -230,7 +231,7 @@ class Environment:
             # Destination is chosen such that it has the highest expected value
             max_score = max(expected_scores.values())
             dest_candidates = [k for k, v in expected_scores.items() if v == max_score]
-            dest = min(expected_scores, key=lambda coord: (coord[0]-x)**2 + (coord[1]-y)**2)
+            dest = min(dest_candidates, key=lambda coord: (coord[0]-x)**2 + (coord[1]-y)**2)
 
             # move
             agents[dest] = agents[source]
