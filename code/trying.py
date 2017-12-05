@@ -184,7 +184,6 @@ class Environment:
 
         # Probability of relocation
         p = 0.05
-        #p = 1
 
         # Choose migrating agents
         migrator_indices = np.argwhere(self.env > 0)
@@ -219,13 +218,12 @@ class Environment:
                 # Calculate by looking at neighboring cells
                 d_x, d_y = empty_spot
                 score = 0
-                for a in [d_x-1, d_x+1]:
-                    for b in [d_y-1, d_y+1]:
-                        if not (0 <= a < n and 0 <= b < n):
-                            continue
-                        opponent_strategy = self.env[a, b]
-                        if opponent_strategy != 0:
-                            score += score_lookup[(my_strategy, opponent_strategy)]
+                for a, b in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
+                    if not (0 <= d_x+a < n and 0 <= d_y+b < n):
+                        continue
+                    opponent_strategy = self.env[d_x+a, d_y+b]
+                    if opponent_strategy != 0:
+                        score += score_lookup[(my_strategy, opponent_strategy)]
                 expected_scores[empty_spot] = score
 
             # Destination is chosen such that it has the highest expected value
