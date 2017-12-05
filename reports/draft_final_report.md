@@ -1,3 +1,5 @@
+### Observing Cooperation in Social Networks
+## Katya Donovan, Tony Kim, Noah Rivkin
 ## Abstract
 
 Following Helbing’s and Yu’s model on cooperation of success-driven individuals, we explore how noise affects the outbreak of cooperation among agents. In Helbing’s and Yu’s model, they implement noise in two ways: one as strategy mutations in which an agent spontaneously chooses to cooperate or defect, and one where an agent chooses to migrate without considering the success of the destination. With this model, we can see clusters of cooperation, even when the individuals are success driven. As an extension to this model, we investigate the effects of a trust based migration on communities of cooperators and defectors. We analyze this in two different ways, one where the agents migrate based on whether the neighbors of empty cells have cooperated more frequently than defected, and the other where the agents who are unhappy, or surrounded by defecting cells, move to a random location.
