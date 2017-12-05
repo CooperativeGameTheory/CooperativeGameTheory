@@ -96,6 +96,10 @@ class Environment:
 
         # Register R,S,T,P
         self.rule = {10:R, 9:S, 6:T, 5:P, 0:0, 1:0, 2:0, 4:0, 8:0}
+        self.R = R
+        self.S = S
+        self.T = T
+        self.P = P
 
         # Register configurations
         self.config = config
@@ -199,26 +203,29 @@ class Environment:
             # Get range indices
             source = tuple(source)
             x, y = source
-            range_indices_set = set((x+i, y+j) for i in range(-M, M+1) for j in range(-M, M+1) if not (i==0 and j==0))
+            range_indices_set = set((x+i, y+j) for i in range(-M, M+1) for j in range(-M, M+1))
 
             # Get empty spots within the range (intersection)
             empty_in_range = range_indices_set & empty_indices_set
             if len(empty_in_range) == 0:
                 continue
 
-            # Virtually put the source agent to the empty spots within the range
-            for empty_spot in empty_in_range:
-                self.env[empty_spot] = self.env[source]
-
             # Calculate the expected score for the empty spots
-            c = correlate2d(self.env, self.kernel, mode="same")
-            scores = self.vcountScore(c) # n x n nparray
-
+            score_lookup = {(2,2):self.R, (2,1):self.S, (1,2):self.T, (1,1):self.P}
             expected_scores = dict() # {empty spot index(i,j) : expected score} dictionary
-            for cell in empty_in_range:
-                expected_scores[cell] = scores[cell]
-                # Remove the virtual agent and change back to empty cell
-                self.env[cell] = 0
+            my_strategy = self.env[source]
+            for empty_spot in empty_in_range:
+                # Calculate by looking at neighboring cells
+                d_x, d_y = empty_spot
+                score = 0
+                for a in [d_x-1, d_x+1]:
+                    for b in [d_y-1, d_y+1]:
+                        if not (0 <= a < n and 0 <= b < n):
+                            continue
+                        opponent_strategy = self.env[empty_spot]
+                        if opponent_strategy :
+                            score += score_lookup[(my_strategy, opponent_strategy)]
+                expected_scores[empty_spot] = score
 
             # Destination is chosen such that it has the highest expected value
             max_score = max(expected_scores.values())
