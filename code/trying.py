@@ -35,8 +35,7 @@ class Agent:
         else:
             # with probability q, cooperate, else defect
             self._seed()
-            #self.state = 2 if np.random.rand() < self.q else 1
-            self.state = 2 if np.random.rand() < 0.5 else 1
+            self.state = 2 if np.random.rand() < self.q else 1
         # Update color
         self.color = self.color_lookup[(prev_state, self.state)]
 
@@ -77,7 +76,7 @@ class Environment:
     bounds=[-.5,.5,1.5,2.5,3.5,4.5]
     norm = colors.BoundaryNorm(bounds, cmap.N)
 
-    def __init__(self, L=49, seed=0, R=10, S=0, T=13, P=1, M=3, **config):
+    def __init__(self, L=49, seed=0, R=10, S=0, T=13, P=1, M=5, **config):
         self.size = size = (L, L)
         # Encode 'env' matrix to have
         # Empty location as 0, Defector as 1, Cooperator as 2
@@ -225,7 +224,7 @@ class Environment:
                         if not (0 <= a < n and 0 <= b < n):
                             continue
                         opponent_strategy = self.env[a, b]
-                        if opponent_strategy :
+                        if opponent_strategy != 0:
                             score += score_lookup[(my_strategy, opponent_strategy)]
                 expected_scores[empty_spot] = score
 
