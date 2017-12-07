@@ -1,4 +1,4 @@
-- abstract is written in past tense
+- abstract and exension are written in past tense
 
 - add more description of what a sugarscape model is, it is still a bit unclear
 
