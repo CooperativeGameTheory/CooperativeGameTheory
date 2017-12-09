@@ -32,7 +32,7 @@ Starting with a 49 x 49 grid with 50% of empty cells and approximately equal amo
 We first consider the model that does not implement noise or migration. The only remaining way that agents change state is by imitating their highest scoring neighbor. Figure [1] shows Helbing’s and Yu’s model in contrast to Figure [2], which depicts our own implementation of this model. As clearly indicated by the figure, after 200 iterations, our model has less cooperators than Helbing’s and Yu’s. This suggests that Helbing and Yu use a different method to calculate scores than we implemented in our model. This may be due bias in pseudo random number generators, or in our treatment of ties between highest scoring neighbors. However, since the defectors remain a majority in both implementations, we consider our model to be a qualitatively accurate replication of theirs.
 
 
-![Figure 1](/figures/A_model.png "Figure 1")
+![Figure 1](/figures/A_model.jpeg "Figure 1")
 ###### Figure 1: 
 
 ![Figure 2](/figures/A.png "Figure 2")
@@ -40,14 +40,14 @@ We first consider the model that does not implement noise or migration. The only
 
 We then add noise to our model in the form of random strategy mutations. In this implementation cooperators and defectors have a 5% chance of switching to a random state each timestep. This noise eliminates the majority of the cooperators in the model, as can be seen Figure [3], which is Helbing’s and Yu’s model, and Figure [4], our own implementation. 
 
-![Figure 3](/figures/D_model.png "Figure 3")
+![Figure 3](/figures/D_model.jpeg "Figure 3")
 ###### Figure 3: 
 ![Figure 4](/figures/D.png "Figure 4")
 ###### Figure 4: 
 
 Figure [5] depicts Helbing’s and Yu’s implementation of the model without random strategy mutation, instead implementing migration. Figure [6] is our own implementation of the model with those conditions. As shown in the two figures, small clusters of cooperation appear.
 
-![Figure 5](/figures/B_model.png "Figure 5")
+![Figure 5](/figures/B_model.jpeg "Figure 5")
 ###### Figure 5: 
 ![Figure 6](/figures/B.png "Figure 6")
 ###### Figure 6: 
@@ -56,7 +56,7 @@ Figure [5] depicts Helbing’s and Yu’s implementation of the model without ra
 However, the clusters of cooperation are very unstable, because once  we add noise to the model, as in random chance that the strategy of the agents change, the clusters of cooperation cease. Figure [7], Helbing’s and Yu’s model, and Figure [8], our own implementation of the model, clearly show this elimination.
 
 
-![Figure 7](/figures/E_model.png "Figure 5")
+![Figure 7](/figures/E_model.jpeg "Figure 5")
 ###### Figure 7: 
 ![Figure 8](/figures/E.png "Figure 6")
 ###### Figure 8: 
