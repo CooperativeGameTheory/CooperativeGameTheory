@@ -16,7 +16,7 @@ class Agent:
     """
     color_lookup = {(1,1):1, (2,2):2, (1,2):3, (2,1):4}
 
-    def __init__(self, initial_state, r=0.05, q=0.05, seed=100):
+    def __init__(self, initial_state, r=0.00, q=0.05, seed=100):
         self.state = initial_state
         self.best_neighbor = initial_state
         self.color = 1 if initial_state == 1 else 2
