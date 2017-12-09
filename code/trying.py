@@ -16,7 +16,7 @@ class Agent:
     """
     color_lookup = {(1,1):1, (2,2):2, (1,2):3, (2,1):4}
 
-    def __init__(self, initial_state, r=0.05, q=0.05, seed=100):
+    def __init__(self, initial_state, r=0, q=0.0, seed=100):
         self.state = initial_state
         self.best_neighbor = initial_state
         self.color = 1 if initial_state == 1 else 2
@@ -31,7 +31,8 @@ class Agent:
         prev_state = self.state
         self._seed()
         if np.random.rand() < 1-self.r:
-            self.state = self.best_neighbor
+            #change: self.state = self.best_neighbor
+            self.state = self.state
         else:
             # with probability q, cooperate, else defect
             self._seed()
@@ -76,7 +77,7 @@ class Environment:
     bounds=[-.5,.5,1.5,2.5,3.5,4.5]
     norm = colors.BoundaryNorm(bounds, cmap.N)
 
-    def __init__(self, L=49, seed=0, R=10, S=0, T=13, P=1, M=5, **config):
+    def __init__(self, L=49, seed=0, R=12, S=0, T=13, P=1, M=5, **config):
         self.size = size = (L, L)
         # Encode 'env' matrix to have
         # Empty location as 0, Defector as 1, Cooperator as 2
@@ -138,7 +139,7 @@ class Environment:
 
         # Default correlate2d handles boundary with 'fill' option with 'fillvalue' zero.
         c = correlate2d(self.env, self.kernel, mode="same")
-
+        #print(self.env)
         # Each digit (in hex) of the number (in each cell) can be either:
         # 0 : both cell is empty
         # 1,2,4,8 : one of the cell is empty
@@ -152,8 +153,9 @@ class Environment:
         #print(self.scores)
         # Find best for each cell
         surrounding = correlate2d(self.scores, self.kernel2, mode="same")
-        best = self.vfindBest(surrounding)
 
+        best = self.vfindBest(surrounding)
+        #print(best)
         # Encoded as middle = 0, top = 1, left = 2, right = 3, bottom = 4
         # Note that x is indexed first and y is indexed last (x is vertical, y is horizontal)
         tuple_lookup = {0:(0,0), 1:(-1,0), 2:(0,-1), 3:(0,1), 4:(1,0)}
@@ -165,9 +167,10 @@ class Environment:
             x, y = idx
             deltaX, deltaY = tuple_lookup[best[idx]]
             best_neighbor_state = self.env[x+deltaX, y+deltaY]
+            #print(best_neighbor_state)
+
             agent.update_best_performing_neighbor(best_neighbor_state)
             agent.choose_next_state()
-
 
         return self.scores
 
@@ -183,8 +186,7 @@ class Environment:
         M = self.neighborhood
 
         # Probability of relocation
-        p = 0.05
-
+        p = 0.1
         # Choose migrating agents
         migrator_indices = np.argwhere(self.env > 0)
         self._seed()
@@ -349,4 +351,9 @@ if __name__ == '__main__':
     env.playRound()
     #env.debug(2,3)
     env.visualize()
+    env.playRound()
+    env.visualize()
+    env.playRound()
+    env.playRound()
+
     env.animate()
