@@ -16,7 +16,7 @@ class Agent:
     """
     color_lookup = {(1,1):1, (2,2):2, (1,2):3, (2,1):4}
 
-    def __init__(self, initial_state, r=0, q=0.0, seed=100):
+    def __init__(self, initial_state, r=0.05, q=0.05, seed=100):
         self.state = initial_state
         self.best_neighbor = initial_state
         self.color = 1 if initial_state == 1 else 2
@@ -27,12 +27,12 @@ class Agent:
     def update_best_performing_neighbor(self, code):
         self.best_neighbor = code
 
+
     def choose_next_state(self):
         prev_state = self.state
         self._seed()
         if np.random.rand() < 1-self.r:
-            #change: self.state = self.best_neighbor
-            self.state = self.state
+            self.state = self.best_neighbor
         else:
             # with probability q, cooperate, else defect
             self._seed()
@@ -139,7 +139,7 @@ class Environment:
 
         # Default correlate2d handles boundary with 'fill' option with 'fillvalue' zero.
         c = correlate2d(self.env, self.kernel, mode="same")
-        #print(self.env)
+
         # Each digit (in hex) of the number (in each cell) can be either:
         # 0 : both cell is empty
         # 1,2,4,8 : one of the cell is empty
@@ -155,7 +155,7 @@ class Environment:
         surrounding = correlate2d(self.scores, self.kernel2, mode="same")
 
         best = self.vfindBest(surrounding)
-        #print(best)
+
         # Encoded as middle = 0, top = 1, left = 2, right = 3, bottom = 4
         # Note that x is indexed first and y is indexed last (x is vertical, y is horizontal)
         tuple_lookup = {0:(0,0), 1:(-1,0), 2:(0,-1), 3:(0,1), 4:(1,0)}
@@ -167,7 +167,6 @@ class Environment:
             x, y = idx
             deltaX, deltaY = tuple_lookup[best[idx]]
             best_neighbor_state = self.env[x+deltaX, y+deltaY]
-            #print(best_neighbor_state)
 
             agent.update_best_performing_neighbor(best_neighbor_state)
             agent.choose_next_state()
@@ -351,9 +350,4 @@ if __name__ == '__main__':
     env.playRound()
     #env.debug(2,3)
     env.visualize()
-    env.playRound()
-    env.visualize()
-    env.playRound()
-    env.playRound()
-
     env.animate()
