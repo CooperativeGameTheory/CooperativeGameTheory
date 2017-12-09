@@ -26,7 +26,7 @@ class Agent:
     def update_best_performing_neighbor(self, code):
         self.best_neighbor = code
 
-    def choose_next_state(self):
+    def choose_next_state(self, trust):
         prev_state = self.state
         self._seed()
         if np.random.rand() < 1-self.r:
@@ -34,7 +34,7 @@ class Agent:
         else:
             # with probability q, cooperate, else defect
             self._seed()
-            self.state = 2 if np.random.rand() < self.q else 1
+            self.state = 2 if trust > .5 else 1
         # Update color
         self.color = self.color_lookup[(prev_state, self.state)]
 
@@ -81,9 +81,9 @@ class Environment:
         # Empty location as 0, Defector as 1, Cooperator as 2
         self.env = np.zeros(size, dtype=np.uint64)
         # random trust initialization
-        # self.trust_network = np.random.rand(L*L//2, L*L//2)
+        self.trust_network = np.random.rand(L*L//2, L*L//2)
         # uniform trust initialization
-        self.trust_network = np.multiply(np.ones((L*L//2, L*L//2,), dtype=np.float64), 1/2)
+        # self.trust_network = np.multiply(np.ones((L*L//2, L*L//2,), dtype=np.float64), 1/2)
 
         # Register vectorized count score function and get state function
         self.vcountScore = np.vectorize(self._countScore)
@@ -161,7 +161,7 @@ class Environment:
             deltaX, deltaY = tuple_lookup[best[idx]]
             best_neighbor_state = self.env[x+deltaX, y+deltaY]
             agent.update_best_performing_neighbor(best_neighbor_state)
-            agent.choose_next_state()
+            agent.choose_next_state(self.getTrustAverage((x,y)))
 
 
         if self.config.get("migrate"):
@@ -192,7 +192,7 @@ class Environment:
         for index in migrator_indices:
             trust_at_loc[tuple(index)] = self.getTrustAverage(tuple(index))
         sorted_trust_at_loc = sorted(trust_at_loc, key=trust_at_loc.get)
-        migrator_indices = migrator_indices[0:reloc_num]
+        migrator_indices = sorted_trust_at_loc[0:reloc_num]
         if len(migrator_indices):
             self._seed()
             np.random.shuffle(migrator_indices)
@@ -201,7 +201,6 @@ class Environment:
         empty_indices = np.argwhere(self.env == 0)
 
         # for each migrating agent, choose random destination
-        # print(trust_at_loc[sorted_trust_at_loc[0]], trust_at_loc[sorted_trust_at_loc[1]],trust_at_loc[sorted_trust_at_loc[-1]])
         for source in migrator_indices:
             source = tuple(source)
             self._seed()
