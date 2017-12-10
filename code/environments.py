@@ -29,12 +29,12 @@ class Agent:
     def choose_next_state(self, trust):
         prev_state = self.state
         self._seed()
-        if np.random.rand() < 1-self.r:
+        if np.random.rand() > 1-self.r:
             self.state = self.best_neighbor
         else:
             # with probability q, cooperate, else defect
             self._seed()
-            self.state = 2 if trust > .5 else 1
+            self.state = 2 if trust > .6 else 1
         # Update color
         self.color = self.color_lookup[(prev_state, self.state)]
 
@@ -162,6 +162,7 @@ class Environment:
             best_neighbor_state = self.env[x+deltaX, y+deltaY]
             agent.update_best_performing_neighbor(best_neighbor_state)
             agent.choose_next_state(self.getTrustAverage((x,y)))
+            self.updateTrust(idx)
 
 
         if self.config.get("migrate"):
@@ -280,7 +281,20 @@ class Environment:
             return .5
         return total/num_adj
 
-
+    def updateTrust(self,loc):
+        x, y = loc
+        total = 0
+        num_adj = 0
+        ident1 = self.locations[(x,y)]
+        for i in [1,-1]:
+            for j in [1, -1]:
+                idx = (x + i, y + j)
+                if idx in self.locations:
+                    ident2 = self.locations[idx]
+                    if self.agents[idx].state == 1:
+                        return self.getTrustPair(ident1,ident2) - .1
+                    elif self.agents[idx].state == 2:
+                        return self.getTrustPair(ident1,ident2) + .1
     # private functions
     def _countScore(self, num):
         total = 0
@@ -330,4 +344,3 @@ class Environment:
 #    def playgame(self, agentA, agentB):
 #        A, B = agentA.status, agentB.status
 #        rules[(A,B)]
-
