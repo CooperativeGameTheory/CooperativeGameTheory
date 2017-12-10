@@ -26,7 +26,7 @@ class Agent:
     def update_best_performing_neighbor(self, code):
         self.best_neighbor = code
 
-    def choose_next_state(self):
+    def choose_next_state(self, trust):
         prev_state = self.state
         self._seed()
         if np.random.rand() < 1-self.r:
@@ -34,7 +34,7 @@ class Agent:
         else:
             # with probability q, cooperate, else defect
             self._seed()
-            self.state = 2 if np.random.rand() < self.q else 1
+            self.state = 2 if trust > .5 else 1
         # Update color
         self.color = self.color_lookup[(prev_state, self.state)]
 
@@ -80,6 +80,10 @@ class Environment:
         # Encode 'env' matrix to have
         # Empty location as 0, Defector as 1, Cooperator as 2
         self.env = np.zeros(size, dtype=np.uint64)
+        # random trust initialization
+        self.trust_network = np.random.rand(L*L//2, L*L//2)
+        # uniform trust initialization
+        # self.trust_network = np.multiply(np.ones((L*L//2, L*L//2,), dtype=np.float64), 1/2)
 
         # Register vectorized count score function and get state function
         self.vcountScore = np.vectorize(self._countScore)
@@ -89,6 +93,9 @@ class Environment:
 
         # Make a matrix that holds Agent objects
         self.agents = np.full(size, None)
+
+        # a dictionary to hold locations af agents to agent ids
+        self.locations = {}
 
         # Register seed
         self.seed = seed
@@ -110,11 +117,12 @@ class Environment:
         self._seed()
         chosen_indices = np.random.choice(L*L, L*L//2, replace=False)
 
-        for idx in all_indices[chosen_indices,:]:
+        for i, idx in enumerate(all_indices[chosen_indices,:]):
             self._seed()
             initial_state = np.random.choice([1,2])
             self._seed()
             self.agents[tuple(idx)] = Agent(initial_state, seed=self.seed)
+            self.locations[tuple(idx)] = i+1
 
         self.update_env()
 
@@ -153,7 +161,7 @@ class Environment:
             deltaX, deltaY = tuple_lookup[best[idx]]
             best_neighbor_state = self.env[x+deltaX, y+deltaY]
             agent.update_best_performing_neighbor(best_neighbor_state)
-            agent.choose_next_state()
+            agent.choose_next_state(self.getTrustAverage((x,y)))
 
 
         if self.config.get("migrate"):
@@ -173,14 +181,18 @@ class Environment:
         env = self.env
         agents = self.agents
 
-        # Probability of relocation
+        # number of relocation: proportional to p
         p = 0.05
+        L, _ = self.size
+        reloc_num = int((p * L * L) // 2)
 
         # Choose migrating agents
         migrator_indices = np.argwhere(self.env > 0)
-        self._seed()
-        r = np.random.rand(migrator_indices.shape[0])
-        migrator_indices = migrator_indices[r<p]
+        trust_at_loc = {}
+        for index in migrator_indices:
+            trust_at_loc[tuple(index)] = self.getTrustAverage(tuple(index))
+        sorted_trust_at_loc = sorted(trust_at_loc, key=trust_at_loc.get)
+        migrator_indices = sorted_trust_at_loc[0:reloc_num]
         if len(migrator_indices):
             self._seed()
             np.random.shuffle(migrator_indices)
@@ -197,6 +209,9 @@ class Environment:
 
             # move
             agents[dest] = agents[source]
+            ident = self.locations[source]
+            del self.locations[source]
+            self.locations[dest] = ident
             agents[source] = None
             empty_indices[i] = list(source)
 
@@ -245,6 +260,25 @@ class Environment:
         print("[Best]")
         print(best[chopper])
         return self.agents, self.env, scores, surrounding, best
+
+    def getTrustPair(self, ident1, ident2):
+        return self.trust_network[ident1 - 1, ident2 - 1]
+
+    def getTrustAverage(self, loc):
+        x, y = loc
+        total = 0
+        num_adj = 0
+        ident1 = self.locations[(x,y)]
+        for i in [1,-1]:
+            for j in [1, -1]:
+                idx = (x + i, y + j)
+                if idx in self.locations:
+                    ident2 = self.locations[idx]
+                    total += self.getTrustPair(ident1, ident2)
+                    num_adj += 1
+        if num_adj == 0:
+            return .5
+        return total/num_adj
 
 
     # private functions
