@@ -36,35 +36,34 @@ We first consider the model that does not implement noise or migration. The only
 
 |![Figure 1](/figures/A_model.jpeg "Figure 1: Helbing and Yu’s model without noise after 200 timesteps")| ![Figure 2](/figures/A.png "Figure 2: Our implementation of Helbing and Yu’s model after 200 timesteps")|
 |:----------:|:----------:|
-| **Figure 1: Helbing and Yu’s model without noise after 200 timesteps** , T=1.1, c<sub>0</sub>=0.1 | **Figure 2: Our implementation of Helbing and Yu’s model after 200 timesteps**, T=1.7, c<sub>0</sub> = 0.5| 
+| Figure 1: Helbing and Yu’s model without noise after 200 timesteps | Figure 2: Our implementation of Helbing and Yu’s model after 200 timesteps| 
 
 
 We add noise to our model in the form of random strategy mutations. In this implementation cooperators and defectors have a 5% chance of switching to a random state each timestep. This noise eliminates the majority of the cooperators in the model, as can be seen Figure 3, which is Helbing’s and Yu’s model, and Figure 4, our own implementation. Since cooperators are mostly eliminated, we observe that imitation based strategies is not robust against random mutations. This is because cooperative cluster can easily be invaded when a member of the cluster mutates into a defector. At that point the defector will be completely surrounded by cooperators. It will have a score of 4T, the maximum possible score for a single agent, and its neighbors will imitate it. This can eliminate the cooperative cluster in only a few rounds.
 
-![Figure 3](/figures/D_model.jpeg "Figure 3")
-###### Figure 3: Helbing and Yu’s model with random strategy mutation after 200 timesteps
-![Figure 4](/figures/D.png "Figure 4")
-###### Figure 4: Our model with random strategy mutations after 200 timesteps
+|![Figure 3](/figures/D_model.jpeg "Figure 3") "Figure 3: Helbing and Yu’s model with random strategy mutation after 200 timesteps")| ![Figure 4](/figures/D.png "Figure 4")|
+|:----------:|:----------:|
+| Figure 3: Helbing and Yu’s model with random strategy mutation after 200 timesteps| Figure 4: Our model with random strategy mutations after 200 timesteps|
+
 
 Figure 5 depicts Helbing’s and Yu’s implementation of the model without random strategy mutation, instead implementing migration. Figure 6 is our own implementation of the model with those conditions. As shown in the two figures, small clusters of cooperation appear, because random agents will chose to migrate to a place where their score is higher, which is overall higher for a collective group of cooperators than for a group of defectors, indicating why clusters may appear.
 
-![Figure 5](/figures/B_model.jpeg "Figure 5")
-###### Figure 5: 
-![Figure 6](/figures/B.png "Figure 6")
-###### Figure 6:
+
+|![Figure 5](/figures/B_model.jpeg "Figure 5") "Figure 3: Helbing and Yu’s model with random strategy mutation after 200 timesteps")| ![Figure 6](/figures/B.png "Figure 6")|
+|:----------:|:----------:|
+| Figure 5:  Helbing’s and Yu’s model with migration after 200 timesteps|Figure 6: Our model with migration after 200 timesteps|
 
 However, the clusters of cooperation are unstable, because once we add noise to the model, as in random chance that the strategy of the agents change, the clusters of cooperation cease. One defector can eliminate a cluster of cooperators, by taking advantage of their strategy, which turns them into defectors the next time the model is run. Figure 7, Helbing’s and Yu’s model, and Figure 8, our own implementation of the model, clearly show this elimination.
 
-![Figure 7](/figures/E_model.jpeg "Figure 7")
-###### Figure 7: Helbing and Yu’s implementation of the model with destination based migration, in addition to random migration noise after 200 timesteps
-
-![Figure 8](/figures/E.png "Figure 8")
-###### Figure 8: Our model with destination based migration, in addition to random migration noise after 200 timesteps
+|![Figure 7](/figures/E_model.jpeg "Figure 7") "Figure 3: Helbing and Yu’s model with random strategy mutation after 200 timesteps")|![Figure 8](/figures/E.png "Figure 8")|
+|:----------:|:----------:|
+| Figure 7: Helbing and Yu’s implementation of the model with destination based migration, in addition to random migration noise after 200 timesteps|Figure 8: Our model with destination based migration, in addition to random migration noise after 200 timesteps|
 
 We extend our model by implementing a dynamic social network to our agents, which affects the agent’s strategies and migration. Agents now follow an origin based migration where agents with low trust values move to a random location. We believe that by implementing a social network, we will observe more clusters of cooperators after a shorter time frame. Figure 9 shows the results from this implementation after 200 time step iterations. As predicted, there is a higher amount of clustering than without a social network. There are also more cooperators, which indicates that trust can build up among agents fairly quickly.  
 
-![Figure 9](/figures/extend.png "Figure 9")
-###### Figure 9: Our extension of the model with trust based strategy and migration after 200 timesteps
+|![Figure 9](/figures/extend.png "Figure 9")
+|:----------:|
+| Figure 9: Our extension of the model with trust based strategy and migration after 200 timesteps|
 
 We use our extension to simulate relationships among people in the real world, as humans are inherently biased towards people who have been kind to them in the past. By implementing trust based strategies and migration, we can mimic our own bias towards people who have been either trustworthy or untrustworthy. With this imitation, we find small communities of cooperators, similar to how societies are structured in the real world.
 
